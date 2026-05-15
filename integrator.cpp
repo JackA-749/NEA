@@ -116,13 +116,15 @@ stepresult velocity_verlet(vector<double> photon_positions, vector<double> photo
 }
 
 // setting up the pybindmodule to expose the C++ to python
-PYBIND11_MODULE(NEA_integrator, m, py::mod_gil_not_used()) {
-    m.doc() = "Module containing distance and gravity calculators as well as numerical integrator functions and custom classes to ensure compatability" // Module docstring
+PYBIND11_MODULE(integrator, m) {
+    m.doc() = "Module containing distance and gravity calculators as well as numerical integrator functions and custom classes to ensure compatability"; // Module docstring
 
     // Expose the integrator function to python:
-    m.def("velocity_verlet" &velocity_verlet, "Velocity verlet numerical integrator for photons", py::arg("photon_positions"), py::arg("photon_velocities"), py::arg("black_hole_position"), py::arg("minimum_radius"), py::arg("dt"))
+    m.def("velocity_verlet", &velocity_verlet, "Velocity verlet numerical integrator for photons", py::arg("photon_positions"), py::arg("photon_velocities"), py::arg("black_hole_position"), py::arg("minimum_radius"), py::arg("dt"));
 
     // Expose the stepresult class so that it can be passed between and interpretted by both languages
-    py::class<stepresult>(m, "stepresult")
-        .def(py::init<const std::string&>()) // probably doesnt work, need to read docs more
+    py::class_<stepresult>(m, "stepresult")
+        .def_readwrite("captured", &stepresult::captured)
+        .def_readwrite("Newcoordinate", &stepresult::Newcoordinate)
+        .def_readwrite("Newvelocitys", &stepresult::Newvelocitys);
 }
