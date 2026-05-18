@@ -36,3 +36,6 @@ setup(
     cmdclass={"build_ext": build_ext},
     zip_safe=False,  # Important for platform-specific wheels
 )
+
+''' TO RUN THE SETUP, USE THE FOLLOWING COMMAND IN THE TERMINAL:
+    python setup.py build_ext --inplace'''
