@@ -23,7 +23,7 @@ except Exception as error: # if system cannot be found
 ext_modules = [
     Pybind11Extension(
         "integrator",  # Module name
-        ["integrator.cpp"],  # Source file
+        ["NEA_integrator.cpp"],  # Source file
         extra_compile_args=compiler_flags, # Add the appropriate compiler flags based on the platform
         language='c++', # Specify the language to ensure correct compilation
     ),
@@ -38,4 +38,5 @@ setup(
 )
 
 ''' TO RUN THE SETUP, USE THE FOLLOWING COMMAND IN THE TERMINAL:
-    python setup.py build_ext --inplace'''
+    python setup.py build_ext --inplace
+'''
