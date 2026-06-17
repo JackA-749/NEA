@@ -2,11 +2,11 @@ import integrator
 import matplotlib.pyplot as plt
 
 # velocity_verlet(vector<double> photon_positions, vector<double> photon_velocities, vector<double> black_hole_position, double minimum_radius, double dt)
-black_hole_pos = [5, 5]
-schwarzschild_radius = 0.75
-dt = 0.001
+black_hole_pos = [0.5, 0.5]
+schwarzschild_radius = 0.2
+dt = 0.0001
 photon_pos = [0, 0]
-photon_vel = [0.5, 2]
+photon_vel = [0.5, 0.2]
 
 x_positions = [photon_pos[0]]
 y_positions = [photon_pos[1]]
