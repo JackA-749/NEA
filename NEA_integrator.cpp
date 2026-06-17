@@ -71,7 +71,7 @@ vector<double> gravity_accel(vector<double> photon_positions, vector<double> bla
 
 }
 
-stepresult velocity_verlet(vector<double> photon_positions, vector<double> photon_velocities, vector<double> black_hole_position, double minimum_radius, double dt, int BH_Mass) {
+stepresult velocity_verlet(vector<double> photon_positions, vector<double> photon_velocities, vector<double> black_hole_position, double dt, int BH_Mass) {
 
     // Create the result structure to store required values
     stepresult verlet_results;
