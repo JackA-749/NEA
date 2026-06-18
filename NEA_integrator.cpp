@@ -12,8 +12,8 @@ using namespace pybind11::literals;
 using namespace std;
 
 // Global variables / physical constants
-int G = 5.27191743 * pow(10, -21);
-int C = 299792458
+int G = 1.0;
+int C = 1.0;
 
 // Artificial decay factor to make the photon spiral inward over time.
 // This is a simulation aid; without energy loss, a Newtonian orbit can remain stable.
@@ -30,7 +30,7 @@ struct stepresult {
 
 // declare the names of functions within the file
 vector<double> gravity_accel(vector<double> photon_positions, vector<double> black_hole_position, int BH_Mass);
-stepresult velocity_verlet(vector<double> photon_positions, vector<double> photon_velocities, vector<double> black_hole_position, double minimum_radius, double dt, int BH_Mass);
+stepresult velocity_verlet(vector<double> photon_positions, vector<double> photon_velocities, vector<double> black_hole_position, double dt, int BH_Mass);
 vector<double> get_dist (vector<double> photon_positions, vector<double> black_hole_position);
 
 // main loop
@@ -79,7 +79,7 @@ stepresult velocity_verlet(vector<double> photon_positions, vector<double> photo
     verlet_results.Newvelocitys.resize(2);
 
     // Calculate Schwarzschild radius
-    double minimum_radius = (2*G*BH_Mass) / C*C
+    double minimum_radius = 2*BH_Mass;
 
     // get the distance from the black hole 
     vector<double> distances = get_dist(photon_positions, black_hole_position); // {x_dist, y_dist, distance}
@@ -97,7 +97,7 @@ stepresult velocity_verlet(vector<double> photon_positions, vector<double> photo
     verlet_results.captured = false;
 
     // get acceleration for this step
-    vector<double> accelerations = gravity_accel(photon_positions, black_hole_position); // {x_accel, y_accel}
+    vector<double> accelerations = gravity_accel(photon_positions, black_hole_position, BH_Mass); // {x_accel, y_accel}
 
     // calculate new coordinates
     double new_x_position = photon_positions[0] + photon_velocities[0] * dt + 0.5 * accelerations[0] * (dt * dt);
@@ -135,7 +135,7 @@ PYBIND11_MODULE(integrator, m) {
     m.doc() = "Module containing distance and gravity calculators as well as numerical integrator functions and custom classes to ensure compatability"; // Module docstring
 
     // Expose the integrator function to python:
-    m.def("velocity_verlet", &velocity_verlet, "Velocity verlet numerical integrator for photons", py::arg("photon_positions"), py::arg("photon_velocities"), py::arg("black_hole_position"), py::arg("minimum_radius"), py::arg("dt"));
+    m.def("velocity_verlet", &velocity_verlet, "Velocity verlet numerical integrator for photons", py::arg("photon_positions"), py::arg("photon_velocities"), py::arg("black_hole_position"), py::arg("dt"), py::arg("BH_Mass"));
 
     // Expose the stepresult class so that it can be passed between and interpretted by both languages
     py::class_<stepresult>(m, "stepresult")

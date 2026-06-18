@@ -12,7 +12,7 @@ class Photon:
 
     def step_forward(self):
         before_step = self.next_pos
-        self.next_pos = integrator.elocity_verlet(before_step, [self.x_vel, self.y_vel], black_hole_position, time_step, BH_Mass)
+        self.next_pos = integrator.velocity_verlet(before_step, [self.x_vel, self.y_vel], black_hole_position, time_step, BH_Mass)
         self.last_pos = before_step
         positions = [self.last_pos, self.next_pos]
 
@@ -22,6 +22,7 @@ class circular_queue(): # circular queue structure to handle order of photon upd
         self._front_pointer = 0
         self._rear_pointer = size-1
         self._max_length = size
+        self.current_size = size
     
     def add_photons_to_queue(self, photons):
         #add all photons passed in
@@ -39,13 +40,13 @@ class circular_queue(): # circular queue structure to handle order of photon upd
     
     def get_first_item(self):
         #check queue is not already empty
-        if len(self._array) == 0:
+        if self.current_size == 0:
             print("Queue is already empty, exiting function")
             exit()
-        x = self._array[self._front_pointer]
-        self._front_pointer += 1
-        if self._front_pointer+1 == self._max_length:
-            self._front_pointer = 0
+        x = self._array[self._front_pointer] # get the item at the front of the queue
+        self._array[self._front_pointer] = None #remove the item from the queue
+        self.current_size -= 1
+        self._front_pointer = (self._front_pointer + 1) % self._max_length #move the front pointer to the next item in the queue and loop back to beginning if it is at the end of the queue
         return x
     
     def add_new_item_to_list(self, item):
@@ -53,8 +54,9 @@ class circular_queue(): # circular queue structure to handle order of photon upd
         if self._rear_pointer+1 == self._max_length:
             print("Queue is already full, exiting function")
             exit()
-        self._rear_pointer += 1
+        self._rear_pointer = (self._rear_pointer + 1) % self._max_length #move the rear pointer to the next item in the queue and loop back to beginning if it is at the end of the queue
         self._array[self._rear_pointer] = item
+        self.current_size += 1
 
 
     def check_last_item(self):
@@ -71,7 +73,7 @@ def run_simulation(BlackHoleMass, BlackHoleX, BlackHoleY, photon_number, dt, num
     global black_hole_position
     black_hole_position = [BlackHoleX, BlackHoleY]
     global BH_Mass
-    BH_mass = BlackHoleMass
+    BH_Mass = BlackHoleMass
     global time_step
     time_step = dt
     global PHOTON_NUM
@@ -85,7 +87,7 @@ def run_simulation(BlackHoleMass, BlackHoleX, BlackHoleY, photon_number, dt, num
     y_vals = np.linspace(0, 10, PHOTON_NUM) # creates a list of evenly spaced y-values for photons along the length of the y axis
 
     for i in range(0, PHOTON_NUM):
-        photons.append(Photon([0.0, y_vals[i].item()], [0.0,0.0])) # add all photons to the the list with correct coordinates
+        photons.append(Photon([0.0, y_vals[i].item()], [1.0,0.0])) # add all photons to the the list with correct coordinates
 
     #Add all photons to the queue
     queue.add_photons_to_queue(photons)
@@ -99,13 +101,11 @@ def run_simulation(BlackHoleMass, BlackHoleX, BlackHoleY, photon_number, dt, num
         #iterate through the entire queue of photons once to get new values for the plot
         for j in range(0, (PHOTON_NUM-1)):
             current_photon = queue.get_first_item()
-            last_positions.append(current_photon.next_pos)
-            '''current_photon = integrator.velocity_verlet(current_photon)
-            new_positions.append(current_photon.next_pos)
-            update_plot(last_positions, new_positions)'''
+            positions = current_photon.step_forward() # get the new positions of the photon
+            last_positions.append(positions[0]) # add the last position of the photon to the list of last positions
+            new_positions.append(positions[1]) # add the new position of the photon to the list of new positions
         steps_taken += 1
-        print(steps_taken)
-        if steps_taken == num_steps:
+        if steps_taken >= num_steps:
             simulation_complete = True
 
     print(last_positions)
