@@ -6,6 +6,7 @@
 // Adding pybind
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+
 namespace py = pybind11;
 using namespace pybind11::literals;
 
@@ -29,8 +30,8 @@ struct stepresult {
 };
 
 // declare the names of functions within the file
-vector<double> gravity_accel(vector<double> photon_positions, vector<double> black_hole_position, int BH_Mass);
-stepresult velocity_verlet(vector<double> photon_positions, vector<double> photon_velocities, vector<double> black_hole_position, double dt, int BH_Mass);
+vector<double> gravity_accel(vector<double> photon_positions, vector<double> black_hole_position, double BH_Mass);
+stepresult velocity_verlet(vector<double> photon_positions, vector<double> photon_velocities, vector<double> black_hole_position, double dt, double BH_Mass);
 vector<double> get_dist (vector<double> photon_positions, vector<double> black_hole_position);
 
 // main loop
@@ -51,7 +52,7 @@ vector<double> get_dist (vector<double> photon_positions, vector<double> black_h
         return vector<double> {x_dist, y_dist, distance};
 }
 
-vector<double> gravity_accel(vector<double> photon_positions, vector<double> black_hole_position, int BH_Mass) {
+vector<double> gravity_accel(vector<double> photon_positions, vector<double> black_hole_position, double BH_Mass) {
     /* calculate the Acceleration of a light ray across towards the black hole */
 
     vector<double> distances = get_dist(photon_positions, black_hole_position);
@@ -71,7 +72,7 @@ vector<double> gravity_accel(vector<double> photon_positions, vector<double> bla
 
 }
 
-stepresult velocity_verlet(vector<double> photon_positions, vector<double> photon_velocities, vector<double> black_hole_position, double dt, int BH_Mass) {
+stepresult velocity_verlet(vector<double> photon_positions, vector<double> photon_velocities, vector<double> black_hole_position, double dt, double BH_Mass) {
 
     // Create the result structure to store required values
     stepresult verlet_results;
@@ -104,7 +105,7 @@ stepresult velocity_verlet(vector<double> photon_positions, vector<double> photo
     double new_y_position = photon_positions[1] + photon_velocities[1] * dt + 0.5 * accelerations[1] * (dt * dt);
 
     // calculate acceleration at new position
-    vector<double> new_accelerations = gravity_accel(vector<double> {new_x_position, new_y_position}, black_hole_position); // {x_accel, y_accel}
+    vector<double> new_accelerations = gravity_accel(vector<double> {new_x_position, new_y_position}, black_hole_position, BH_Mass); // {x_accel, y_accel}
 
     // calculate new velocities
     double new_x_velocity = photon_velocities[0] + 0.5 * (accelerations[0] + new_accelerations[0]) * dt;
@@ -135,7 +136,11 @@ PYBIND11_MODULE(integrator, m) {
     m.doc() = "Module containing distance and gravity calculators as well as numerical integrator functions and custom classes to ensure compatability"; // Module docstring
 
     // Expose the integrator function to python:
-    m.def("velocity_verlet", &velocity_verlet, "Velocity verlet numerical integrator for photons", py::arg("photon_positions"), py::arg("photon_velocities"), py::arg("black_hole_position"), py::arg("dt"), py::arg("BH_Mass"));
+    m.def("velocity_verlet", &velocity_verlet, "Velocity verlet numerical integrator for photons", 
+        py::arg("photon_positions"), 
+        py::arg("photon_velocities"), 
+        py::arg("black_hole_position"), 
+        py::arg("dt"), py::arg("BH_Mass"));
 
     // Expose the stepresult class so that it can be passed between and interpretted by both languages
     py::class_<stepresult>(m, "stepresult")

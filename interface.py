@@ -2,23 +2,45 @@ import tkinter as tk
 from tkinter import ttk
 from math import floor
 import Simulation
+import traceback
 
 def Start(*args):
-    BlackHoleMass = BH_mass.get()
-    BlackHoleX = BH_Xpos.get()
-    BlackHoleY = BH_Ypos.get()
-    photon_number = Photon_num.get()
-    dt = step_size.get()
-    num_steps = step_count.get()
-    if num_steps == 0:
-        num_steps = floor(10/dt)
-    Simulation.run_simulation(BlackHoleMass, BlackHoleX, BlackHoleY, photon_number, dt, num_steps)
+    try:
+        BlackHoleMass = BH_mass.get()
+        BlackHoleX = BH_Xpos.get()
+        BlackHoleY = BH_Ypos.get()
+        photon_number = Photon_num.get()
+        dt = step_size.get()
+        num_steps = step_count.get()
+        if num_steps == 0:
+            num_steps = floor(10/dt)
+        Simulation.run_simulation(BlackHoleMass, BlackHoleX, BlackHoleY, photon_number, dt, num_steps)
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        traceback.print_exc()
 
 def LoadInfo(*args):
     # When the User clicks the information button, this function will open a new window with the information about the program and how to use it.
     Info_window = tk.Toplevel(master=root)
-    Info_window.title("Info Window")
+    Info_window.title("Information")
     Info_window.geometry("720x810")
+
+    # Create a frame to attatch all elements to
+    InfoFrame = ttk.Frame(Info_window, padding=(3, 3, 12, 12))
+    InfoFrame.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
+
+    # Page title
+    info_title = tk.Label(InfoFrame, text="Parameter Information", font=("Arial", 24))
+    info_title.grid(column=1, row=0, columnspan=2, sticky=(tk.W, tk.E)) # span the title across all columns so it is centered
+
+    # Parameter Titles:
+    mass_title = tk.Label(InfoFrame, text="Black hole mass: ", font=("Arial", 18))
+    mass_title.grid(column=0, row=1)
+
+    # Parameter descriptions:
+    mass_description = tk.Label(InfoFrame, text="The mass of the black hole determines the the magnitude of acceleration that nearby objects will experience and increases the size of the Schwarzschild radius")
+    mass_description.bind('<configure>', lambda e: mass_description.config(wraplength=mass_description.winfo_width()))
+    mass_description.grid(column=1, row=1)
 
 
 root = tk.Tk()
@@ -36,6 +58,14 @@ BH_Ypos = tk.DoubleVar()
 Photon_num = tk.IntVar()
 step_size = tk.DoubleVar()
 step_count = tk.IntVar()
+
+#give each variable a default value to eliminate empty field errors:
+BH_mass = tk.DoubleVar(value=10.0)
+BH_Xpos = tk.DoubleVar(value=0.0)
+BH_Ypos = tk.DoubleVar(value=0.0)
+Photon_num = tk.IntVar(value=100)
+step_size = tk.DoubleVar(value=0.01)
+step_count = tk.IntVar(value=0)
 
 # Create Program Title label:
 Program_title = tk.Label(mainframe, text="Newtonian Black Hole Simulator", font=("Arial", 24))
@@ -65,7 +95,7 @@ BH_Ypos_entry.grid(column=3, row=4, columnspan=2, sticky=(tk.W, tk.E))
 RAY INPUTS
 '''
 tk.Label(mainframe, text="Number of rays", font=("Arial", 16)).grid(column=1, row=6, columnspan=4, sticky=(tk.W, tk.E))
-Photon_num_entry = tk.Scale(mainframe, variable=Photon_num, from_=0, to_=500, tickinterval=25, resolution=1, orient=tk.HORIZONTAL)
+Photon_num_entry = tk.Scale(mainframe, variable=Photon_num, from_=1, to_=500, tickinterval=25, resolution=1, orient=tk.HORIZONTAL)
 Photon_num_entry.grid(column=1, row=7, columnspan=4, sticky=(tk.W, tk.E))
 
 '''
