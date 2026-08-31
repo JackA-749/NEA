@@ -86,7 +86,7 @@ stepresult velocity_verlet(vector<double> photon_positions, vector<double> photo
     vector<double> distances = get_dist(photon_positions, black_hole_position); // {x_dist, y_dist, distance}
     double total_distance = distances[2];
 
-    if (total_distance <= minimum_radius || total_distance <= 1e-12) {
+    if (total_distance <= (0.3 * minimum_radius) || total_distance <= 1e-12) {
         verlet_results.captured = true;
         verlet_results.Newcoordinate[0] = photon_positions[0];
         verlet_results.Newcoordinate[1] = photon_positions[1];
@@ -118,7 +118,7 @@ stepresult velocity_verlet(vector<double> photon_positions, vector<double> photo
 
     // detect capture after the step if the photon moved inside the radius
     vector<double> new_distances = get_dist(vector<double>{new_x_position, new_y_position}, black_hole_position);
-    if (new_distances[2] <= minimum_radius) {
+    if (new_distances[2] <= (0.3 *minimum_radius)) {
         verlet_results.captured = true;
     }
 

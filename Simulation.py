@@ -5,27 +5,36 @@ import matplotlib.pyplot as plt
 # Create a photon class to handle all information
 class Photon:
     def __init__(self, position, velocities):
-        self.last_pos = []
+        self.x_history = [position[0]]
+        self.y_history = [position[1]]
         self.x_vel = velocities[0]
         self.y_vel = velocities[1]
         self.iscaptured = False # all photons start off as not captured
         self.next_pos = position #[x,y]
 
+        self.step_counter = 0 # count to track the number of steps for sampling
+
     def step_forward(self):
-        before_step = self.next_pos
+        if not self.iscaptured:
+            before_step = self.next_pos
 
-        result = integrator.velocity_verlet(before_step, [self.x_vel, self.y_vel], black_hole_position, time_step, BH_Mass)
+            result = integrator.velocity_verlet(
+                before_step, [self.x_vel, self.y_vel], black_hole_position, time_step, BH_Mass
+                )
 
-        self.next_pos = result.Newcoordinate
-        self.iscaptured = result.captured
+            self.next_pos = result.Newcoordinate
+            self.iscaptured = result.captured
 
-        self.x_vel = result.Newvelocitys[0]
-        self.y_vel = result.Newvelocitys[1]
+            self.x_vel = result.Newvelocitys[0]
+            self.y_vel = result.Newvelocitys[1]
 
-        self.last_pos = before_step
-        positions = [self.last_pos, self.next_pos]
+            self.last_pos = before_step
 
-        return positions
+            self.step_counter += 1
+            # only record position to history every 25 steps to improve memory efficiency
+            if self.step_counter % 25 == 0 or self.iscaptured:
+                self.x_history.append(self.next_pos[0])
+                self.y_history.append(self.next_pos[1])
 
 class circular_queue(): # circular queue structure to handle order of photon updates
     def __init__(self, size):
@@ -86,8 +95,8 @@ class Plot:
         self.plot.set_title("Black hole simulation")
 
         # Set plot bounds
-        self.plot.set_xlim(-15, 15)
-        self.plot.set_ylim(-5, 15)
+        self.plot.set_xlim(-150, 150)
+        self.plot.set_ylim(-50, 150)
 
         #set schwarzschild radius
         Schwarzschild = 2 * BH_Mass
@@ -100,17 +109,18 @@ class Plot:
         self.radius = plt.Circle((black_hole_position[0], black_hole_position[1]), Schwarzschild, color="red", fill=False)
         self.plot.add_patch(self.radius)
 
-        # Create an empty scatter plot for the photons
-        self.scatter_plot = self.plot.scatter([], [], color="blue", s=15, label="photons")
+        # Create a line per photon to handle trajerctories
+        self.lines = []
+        for x in range(PHOTON_NUM):
+            line, = self.plot.plot([], [], color='blue', alpha=0.6, linewidth=1.2)
+            self.lines.append(line)
 
         self.plot.set_aspect('equal')
-        plt.legend()
 
-    def Update(self, last_positions, new_positions):
-        if new_positions:
-            #add new photon positions to plot
-            self.scatter_plot.set_offsets(new_positions)
+    def update_photon_lines(self, index, photon_x_history, photon_y_history):
+        self.lines[index].set_data(photon_x_history, photon_y_history) #update the coordinates of the line
 
+    def refresh_plot(self):
         # redraw the new, updated plot
         plt.draw()
         plt.pause(0.001) # add a short delay to let GUI update 
@@ -118,13 +128,10 @@ class Plot:
 
 def run_simulation(BlackHoleMass, BlackHoleX, BlackHoleY, photon_number, dt, num_steps):
     #set required variable for integrator to globals
-    global black_hole_position
+    global black_hole_position, BH_Mass, time_step, PHOTON_NUM
     black_hole_position = [BlackHoleX, BlackHoleY]
-    global BH_Mass
     BH_Mass = BlackHoleMass
-    global time_step
     time_step = dt
-    global PHOTON_NUM
     PHOTON_NUM = photon_number
 
     #Create the queue
@@ -132,10 +139,10 @@ def run_simulation(BlackHoleMass, BlackHoleX, BlackHoleY, photon_number, dt, num
 
     #create a list of evenly spaced photons
     photons = [] # empty list to store photons
-    y_vals = np.linspace(0, 10, PHOTON_NUM) # creates a list of evenly spaced y-values for photons along the length of the y axis
+    y_vals = np.linspace(-50, 150, PHOTON_NUM) # creates a list of evenly spaced y-values for photons along the length of the y axis
 
     for i in range(0, PHOTON_NUM):
-        photons.append(Photon([-10.0, y_vals[i].item()], [1.0,0.0])) # add all photons to the the list with correct coordinates
+        photons.append(Photon([-100.0, y_vals[i].item()], [1.0,0.0])) # add all photons to the the list with correct coordinates
 
     #Add all photons to the queue
     queue.add_photons_to_queue(photons)
@@ -151,28 +158,27 @@ def run_simulation(BlackHoleMass, BlackHoleX, BlackHoleY, photon_number, dt, num
 
     while not simulation_complete:
 
-        last_positions = [] # create an empty list to store the past positions of photons for this loop so they can be passed into the plot update
-        new_positions = [] # create an empty list to store the new positions of photons for this loop so they can be passed into the plot update
-
         #iterate through the entire queue of photons once to get new values for the plot
-        for j in range(0, (PHOTON_NUM)):
+        for j in range(PHOTON_NUM):
             current_photon = queue.get_first_item()
 
             if not current_photon.iscaptured:
-                positions = current_photon.step_forward() # get the new positions of the photon
-                last_positions.append(positions[0]) # add the last position of the photon to the list of last positions
-                new_positions.append(positions[1]) # add the new position of the photon to the list of new positions
-            else:
-                new_positions.append(current_photon.next_pos)
+                current_photon.step_forward() # update the photon positions
 
+            plot.update_photon_lines(j, current_photon.x_history, current_photon.y_history)
+        
             # Add the photon back into the queue
             queue.add_new_item_to_list(current_photon)
-        
-        plot.Update(last_positions, new_positions)
+
+
+        if steps_taken % 5 == 0: #update plot every 5 steps
+            plot.refresh_plot() # refresh the plot once all line segments are drawn
         steps_taken += 1
         if steps_taken >= num_steps:
             simulation_complete = True
             print("simulation ran successfully")
+
+        print(f'steps_taken: {steps_taken}!')
 
 plt.ioff()
 plt.show()
