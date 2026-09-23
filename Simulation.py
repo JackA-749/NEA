@@ -42,14 +42,15 @@ class circular_queue(): # circular queue structure to handle order of photon upd
         self._front_pointer = 0
         self._rear_pointer = size-1
         self._max_length = size
-        self.current_size = size
+        self.current_size = 0
     
     def add_photons_to_queue(self, photons):
         #add all photons passed in
-        count = 0
         for photon in photons:
-            self._array[count] = photon
-            count += 1
+            self._array[self.current_size] = photon
+            self.current_size += 1
+            if self.current_size > self._max_length:
+                raise IndexError("Queue is already full, cannot enqueue another item.")
         #move rear pointer down until it is on a space with an object
         valid = False
         while not valid:
@@ -61,8 +62,7 @@ class circular_queue(): # circular queue structure to handle order of photon upd
     def get_first_item(self):
         #check queue is not already empty
         if self.current_size == 0:
-            print("Queue is already empty, exiting function")
-            exit()
+            raise IndexError("Queue is already empty, cannot dequeue item.")
         x = self._array[self._front_pointer] # get the item at the front of the queue
         self._array[self._front_pointer] = None #remove the item from the queue
         self.current_size -= 1
@@ -72,8 +72,7 @@ class circular_queue(): # circular queue structure to handle order of photon upd
     def add_new_item_to_list(self, item):
         #check if the queue is full
         if self.current_size >= self._max_length:
-            print("Queue is already full, exiting function")
-            exit()
+            raise IndexError("Queue is already full, cannot enqueue another item.")
         self._rear_pointer = (self._rear_pointer + 1) % self._max_length #move the rear pointer to the next item in the queue and loop back to beginning if it is at the end of the queue
         self._array[self._rear_pointer] = item
         self.current_size += 1
@@ -94,9 +93,9 @@ class Plot:
         self.plot.set_ylabel("Y position")
         self.plot.set_title("Black hole simulation")
 
-        # Set plot bounds
-        self.plot.set_xlim(-150, 150)
-        self.plot.set_ylim(-50, 150)
+        # Set plot bounds based on black hole mass
+        self.plot.set_xlim(-(8*BH_Mass), (8*BH_Mass))
+        self.plot.set_ylim(-(8*BH_Mass), (8*BH_Mass))
 
         #set schwarzschild radius
         Schwarzschild = 2 * BH_Mass
@@ -137,12 +136,15 @@ def run_simulation(BlackHoleMass, BlackHoleX, BlackHoleY, photon_number, dt, num
     #Create the queue
     queue = circular_queue(PHOTON_NUM)
 
+    # lists to track photon states
+    captured_photons = []
+
     #create a list of evenly spaced photons
     photons = [] # empty list to store photons
-    y_vals = np.linspace(-50, 150, PHOTON_NUM) # creates a list of evenly spaced y-values for photons along the length of the y axis
+    y_vals = np.linspace(-(8*BH_Mass), (8*BH_Mass), PHOTON_NUM) # creates a list of evenly spaced y-values for photons along the length of the y axis
 
     for i in range(0, PHOTON_NUM):
-        photons.append(Photon([-100.0, y_vals[i].item()], [1.0,0.0])) # add all photons to the the list with correct coordinates
+        photons.append(Photon([-(8*BH_Mass), y_vals[i].item()], [1.0,0.0])) # add all photons to the the list with correct coordinates
 
     #Add all photons to the queue
     queue.add_photons_to_queue(photons)
@@ -165,6 +167,9 @@ def run_simulation(BlackHoleMass, BlackHoleX, BlackHoleY, photon_number, dt, num
             if not current_photon.iscaptured:
                 current_photon.step_forward() # update the photon positions
 
+            else:
+                captured_photons.append(current_photon)
+
             plot.update_photon_lines(j, current_photon.x_history, current_photon.y_history)
         
             # Add the photon back into the queue
@@ -177,6 +182,9 @@ def run_simulation(BlackHoleMass, BlackHoleX, BlackHoleY, photon_number, dt, num
         if steps_taken >= num_steps:
             simulation_complete = True
             print("simulation ran successfully")
+            active_photons = PHOTON_NUM - len(captured_photons)
+            return [len(captured_photons), active_photons]
+            
 
         print(f'steps_taken: {steps_taken}!')
 

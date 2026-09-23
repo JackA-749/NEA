@@ -14,10 +14,95 @@ def Start(*args):
         num_steps = step_count.get()
         if num_steps == 0:
             num_steps = floor(10/dt)
-        Simulation.run_simulation(BlackHoleMass, BlackHoleX, BlackHoleY, photon_number, dt, num_steps)
+        global photon_states
+        photon_states = Simulation.run_simulation(BlackHoleMass, BlackHoleX, BlackHoleY, photon_number, dt, num_steps) #[Captive, (active / escaped)]
+        global param_dict
+        param_dict = {
+            "Black hole mass": BlackHoleMass,
+            "Black hole X": BlackHoleX,
+            "Black hole Y": BlackHoleY,
+            "Photon Number": photon_number,
+            "Step size": dt,
+            "Step count": num_steps
+        }
+        Show_end_screen()
     except Exception as e:
         print(f"Error occurred: {e}")
         traceback.print_exc()
+
+def Export_results():
+    import json
+    from tkinter import filedialog, messagebox
+    results = {
+        "Captured": photon_states[0],
+        "Escaped": photon_states[1],
+        "Parameters": param_dict
+    }
+
+    result_json = json.dumps(results)
+
+    # Open a window for user to select download location
+    file_path = filedialog.asksaveasfilename(
+        defaultextension=".txt",
+        filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")],
+        title="Choose where to save your file"
+    )
+
+    if file_path: # if the user selected a location
+        try:
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(result_json) # write the json object to the file
+
+            messagebox.showinfo("Success", f"File saved successfully to:\n{file_path}") #display a message to show it worked
+
+        except Exception as e:
+            messagebox.showinfo(f"Error could not save file: {e}")
+
+def Show_end_screen():
+    # set up window to hold all elements on results screen at the end of the simulation
+    End_window = tk.Toplevel(master=root)
+    End_window.title("Results")
+    End_window.geometry("720x810")
+
+    # Create a frame to attatch all elements to
+    Endframe = ttk.Frame(End_window, padding=(3, 3, 12, 12))
+    Endframe.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
+
+    # Page title
+    End_title = tk.Label(Endframe, text="Simulation results", font=("Arial", 24))
+    End_title.grid(column=0, row=0, columnspan=4, sticky=(tk.N, tk.W, tk.E, tk.S))
+
+    # Section titles
+    Escaped_title = tk.Label(Endframe, text="Escaped photons:", font=("Arial", 18))
+    Escaped_title.grid(column=0, row=1)
+
+    Captured_title = tk.Label(Endframe, text="Captured photons:", font=("Arial", 18))
+    Captured_title.grid(column=1, row=1)
+    
+    # Section subtitles
+    Escaped_subtitle = tk.Label(Endframe, text="Some active photons will be counted as escaped if simulation was ended early", font=("Arial", 10))
+    Escaped_subtitle.grid(column=0, row=2, sticky=(tk.W, tk.E))
+
+    # Info labels
+    Escaped_count_label = tk.Label(Endframe, text=(f'{photon_states[1]}'), font=("Arial", 24))
+    Escaped_count_label.grid(column=0, row=3, sticky=(tk.W, tk.E))
+
+    Captured_count_label = tk.Label(Endframe, text=(f'{photon_states[0]}'), font=("Arial", 24))
+    Captured_count_label.grid(column=1, row=3, sticky=(tk.W, tk.E))
+
+    # Export button
+    Export_button = tk.Button(Endframe, text="Export results", command=Export_results).grid(column=0, row=20, columnspan=2, sticky=(tk.W, tk.E))
+
+
+
+    # Give each column in the mainframe a weight so columnspan centering works
+    Endframe.columnconfigure(1, weight=1)
+    Endframe.columnconfigure(2, weight=1)
+    Endframe.columnconfigure(3, weight=1)
+    Endframe.columnconfigure(4, weight=1)
+
+
+    
 
 def LoadInfo(*args):
     # When the User clicks the information button, this function will open a new window with the information about the program and how to use it.
@@ -107,7 +192,7 @@ step_size_entry.grid(column=1, row=10, columnspan=4, sticky=(tk.W, tk.E))
 
 tk.Label(mainframe, text="Number of steps", font=("Arial", 16)).grid(column=1, row=11, columnspan=4, sticky=(tk.W, tk.E))
 tk.Label(mainframe, text="Set to 0 to calculate number of steps required for 10 seconds of movement", font=("Arial", 12)).grid(column=1, row=12, columnspan=4, sticky=(tk.W, tk.E))
-step_count_entry = tk.Scale(mainframe, variable=step_count, from_=0, to_=1_000_000, tickinterval=100_000, resolution=100, orient=tk.HORIZONTAL)
+step_count_entry = tk.Scale(mainframe, variable=step_count, from_=0, to_=100_000, tickinterval=10_000, resolution=100, orient=tk.HORIZONTAL)
 step_count_entry.grid(column=1, row=13, columnspan=4, sticky=(tk.W, tk.E))
 
 
@@ -128,7 +213,7 @@ info_button = tk.Button(mainframe, text="info", font=("Arial", 16), command=Load
 info_button.grid(column=4, row=0, sticky=tk.E)
 
 
-tk.Button(mainframe, text="convert to variable", command=Start).grid(column=1, row=20, columnspan=4, sticky=(tk.W, tk.E))
+tk.Button(mainframe, text="Run Simulation", command=Start).grid(column=1, row=20, columnspan=4, sticky=(tk.W, tk.E))
 
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
