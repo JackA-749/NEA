@@ -64,6 +64,8 @@ def Show_end_screen():
     End_window.title("Results")
     End_window.geometry("720x810")
 
+    photon_count = param_dict.get("Photon Number")
+    
     # Create a frame to attatch all elements to
     Endframe = ttk.Frame(End_window, padding=(3, 3, 12, 12))
     Endframe.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
@@ -87,11 +89,18 @@ def Show_end_screen():
     Escaped_count_label = tk.Label(Endframe, text=(f'{photon_states[1]}'), font=("Arial", 24))
     Escaped_count_label.grid(column=0, row=3, sticky=(tk.W, tk.E))
 
+    Escaped_percent = tk.Label(Endframe,text=(f'{100*(photon_states[1]/photon_count)}%'), font=("Arial", 24))
+    Escaped_percent.grid(column=0, row=4, sticky=(tk.W, tk.E))
+
     Captured_count_label = tk.Label(Endframe, text=(f'{photon_states[0]}'), font=("Arial", 24))
     Captured_count_label.grid(column=1, row=3, sticky=(tk.W, tk.E))
 
+    Captured_percent = tk.Label(Endframe,text=(f'{100*(photon_states[0]/photon_count)}%'), font=("Arial", 24))
+    Captured_percent.grid(column=1, row=4, sticky=(tk.W, tk.E))
+
     # Export button
-    Export_button = tk.Button(Endframe, text="Export results", command=Export_results).grid(column=0, row=20, columnspan=2, sticky=(tk.W, tk.E))
+    Export_button = tk.Button(Endframe, text="Export results", command=Export_results)
+    Export_button.grid(column=0, row=20, columnspan=2, sticky=(tk.W, tk.E))
 
 
 
